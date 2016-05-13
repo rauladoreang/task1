@@ -1,0 +1,3 @@
+
+# This Vagrantfile uses plugin triggers. To install it use the following:
+vagrant plugin install vagrant-triggers

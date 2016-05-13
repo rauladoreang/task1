@@ -1,0 +1,38 @@
+---
+- hosts: vagrant
+  remote_user: vagrant
+  become: yes
+  tasks:
+
+    - name: install packages
+      apt: name={{ item }} update_cache=yes state=latest
+      with_items:
+        - apache2
+        - git
+        - mc
+
+#    - name: install apach2
+#      apt: name=apache2 update_cache=yes state=latest
+
+    - name: enable mod_rewrite
+      apache2_module: name=rewrite state=present
+      notify:
+        - restart apache2
+
+    #- name: create index file
+
+    - script: script.sh {{ ansible_eth0.ipv4.address }}
+
+#command: "rm -rf /data/www; mkdir -p /data/www; touch /data/www/index.php; echo {{ ansible_eth0.ipv4.address }} > /data/www/index.php;"
+#      git: repo=https://github.com/WordPress/WordPress.git dest=/data/www update=yes
+
+    - name: update webroot for default vhost
+      lineinfile: dest=/etc/apache2/sites-available/000-default.conf regexp="DocumentRoot /var/www/html" line="DocumentRoot /data/www\n<Directory /data/www>\nAllowOverride none\nRequire all granted\n</Directory>"
+      notify:
+        - restart apache2
+
+
+  handlers:
+    - name: restart apache2
+      command: systemctl  restart apache2.service
+
