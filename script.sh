@@ -1,7 +1,7 @@
 #!/bin/bash
 
-rm -rf /data/www;
-mkdir -p /data/www;
-touch /data/www/index.php;
-echo $1 > /data/www/index.php;
+sudo rm -rf /data/www;
+sudo mkdir -p /data/www;
+sudo touch /data/www/index.php;
+sudo echo $1 > /data/www/index.php;
 

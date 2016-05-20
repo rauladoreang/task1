@@ -1,0 +1,23 @@
+- hosts: vagrant
+
+  tasks:
+
+    - name: install packages
+      apt: name={{ item }} update_cache=yes state=latest
+      sudo: yes
+      with_items:
+        - apache2
+        - git
+        - mc
+
+    - name: enable mod_rewrite
+      apache2_module: name=rewrite state=present
+      sudo: yes
+
+    - script: script.sh {{ ansible_eth0.ipv4.address }}
+      sudo: yes
+
+    - name: update webroot for default vhost
+      lineinfile: dest=/etc/apache2/sites-available/000-default.conf regexp="DocumentRoot /var/www/html" line="DocumentRoot /data/www\n<Directory /data/www>\nAllowOverride none\nRequire all granted\n</Directory>"
+      sudo: yes
+

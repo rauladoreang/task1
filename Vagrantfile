@@ -22,35 +22,25 @@ Vagrant.configure(2) do |config|
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
-
+   config.vm.network "forwarded_port", guest: 80, host: 8080
+   config.vm.network "forwarded_port", guest: 8080, host: 8081
+   
   # Share an additional folder to the guest VM. The first argument is
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
    config.vm.synced_folder ".", "/vagrant", type: "rsync", rsync__exclude: "tmp/"
 
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   sudo apt-get update
-  #   sudo apt-get install -y apache2
-  # SHELL
-
   config.vm.network "private_network", ip: "192.168.158.4", virtualbox__intnet: "vboxnet2"
   config.vm.provider "virtualbox" do | vb |
     unless File.exist?(file_to_disk)
-	vb.customize ['createhd', '--filename', file_to_disk, '--size', 2 * 1024]
+        vb.customize ['createhd', '--filename', file_to_disk, '--size', 2 * 1024]
     end
     vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
-#    vb.customize ['showvminfo', :id ]
-#    vb.customize ['controlvm', :id, 'nic1', 'hostonly', 'vboxnet2' ]  
-#    vb.network 
   end
 
   config.trigger.before :destroy do
-    info "Detaching extra hdd"    
+    info "Detaching extra hdd"
   end
 
   config.vm.provision "shell", inline: $script
@@ -86,11 +76,27 @@ date > /etc/provision_env_disk_added_date
     echo Well done
   SHELL
 
-  config.vm.provision "ansible" do |ansible|
+#  config.vm.provision "ansible" do |ansible|
+  config.vm.provision :ansible_local do |ansible|
     ansible.playbook = "apache.yml"
-#    ansible.verbose = true
-#    ansible.install = true
+    ansible.verbose = "true"
+    ansible.install = "true"
+    ansible.limit = "all"
+    ansible.inventory_path = "hosts"
   end
+
+  config.vm.provision :ansible_local do |ansible|
+    ansible.playbook = "docker.yml"
+    ansible.verbose = "true"
+    ansible.install = "true"
+    ansible.limit = "all"
+    ansible.inventory_path = "hosts"
+  end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    sudo docker build -t apache /vagrant/
+    sudo docker run -d -i -p 8080:80 -t apache -X
+  SHELL
 
 end
 

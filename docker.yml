@@ -1,0 +1,31 @@
+- hosts: vagrant
+
+  tasks:
+
+    - name: install apt transport and ca certificates
+      apt: name={{ item }} update_cache=yes state=latest
+      sudo: yes
+      with_items:
+        - apt-transport-https
+        - ca-certificates
+
+    - name: Add the new GPG key.
+      command: apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+      sudo: yes
+
+    - name: Add repository
+      apt_repository: repo='deb https://apt.dockerproject.org/repo debian-jessie main' state=present
+      sudo: yes
+
+    - name: Install Docker
+      apt: name=docker-engine update_cache=yes state=latest
+      sudo: yes
+
+    - name: Restart Docker
+      command: service docker restart
+      sudo: yes
+
+    - name: Test Docker
+      command: docker run hello-world
+      sudo: yes
+
